@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Water Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      background-color: transparent;
+      overflow: hidden;
+      transform-origin: top left;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 300px;
+      height: auto;
+      background-color: white;
+      padding: 5vh;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
+      margin-top: 0;
+      margin-bottom: 0;
+      border-radius: 10px;
+    }
+
+    .header {
+      background-color: #f75270;
+      color: white;
+      padding: 6px 0; 
+      font-size: 14px; 
+      margin-bottom: 7.5px;
+      border-radius: 4px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 2vh;
+      background-color: #ffd8d8;
+      border-radius: 1vh;
+      margin-bottom: 1vh;
+      overflow: hidden;
+    }
+
+    .progress {
+      height: 100%;
+      background-color: #dc143c;
+      width: 0%;
+      border-radius: 1vh;
+      transition: width 0.3s ease;
+    }
+
+    .plant-image {
+      width: 50%;
+      height: auto;
+      margin: 0 auto;
+      margin-bottom: 1vh;
+    }
+
+    .plant-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    .goal-text {
+      font-size: 2.5vh;
+      color: #f75270;
+    }
+
+    button {
+      margin: 0.5vh;
+      padding: 1.5vh 2vh; 
+      font-size: 2.5vh; 
+      border: none;
+      border-radius: 0.5vh;
+      cursor: pointer;
+      width: 30%;
+      box-sizing: border-box;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .add-button {
+      background-color: #f75270;
+      color: white;
+    }
+
+    .reset-button {
+      background-color: #e06b80;
+      color: white;
+    }
+
+    .undo-button {
+      background-color: #da6c6c;
+      color: white;
+    }
+
+    input[type="number"] {
+      padding: 1vh; 
+      font-size: 2vh; 
+      width: 70%; 
+      margin-bottom: 1vh;
+      border-radius: 0.5vh;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">Daily Water Tracker</div>
+    <div class="plant-image" id="plantImage"></div>
+    <div class="progress-bar">
+      <div class="progress" id="progressBar"></div>
+    </div>
+    <div id="progressText">0%</div>
+    <div class="goal-text">Goal: <span id="goalAmount">72</span> oz</div>
+    <div class="goal-text">Intake: <span id="intakeAmount">0</span> oz</div>
+
+    <input type="number" id="ozInput" placeholder="Ounces" min="1" />
+    <div class="button-container">
+      <button class="add-button" onclick="addIntake()">+</button>
+      <button class="reset-button" onclick="resetTracker()">Reset</button>
+      <button class="undo-button" onclick="undoIntake()">Undo</button>
+    </div>
+  </div>
+
+  <script>
+    let goal = 72;
+    let intake = 0;
+    let history = [];
+
+    function updateWaterTracker() {
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+      const goalAmount = document.getElementById('goalAmount');
+      const intakeAmount = document.getElementById('intakeAmount');
+
+      const progress = intake / goal;
+      progressBar.style.width = (progress * 100) + '%';
+      progressText.textContent = Math.round(progress * 100) + '%';
+      goalAmount.textContent = goal;
+      intakeAmount.textContent = intake;
+
+      let plantStage;
+      if (progress < 0.25) {
+        plantStage = "Empty";
+      } else if (progress >= 1) {
+        plantStage = "Finished";
+      }  else if (progress >= 0.75) {
+        plantStage = "Flowers";
+      } else if (progress >= 0.5) {
+        plantStage = "Petals";
+      } else if (progress >= 0.25) {
+        plantStage = "Seeds";
+      }
+
+      const plantImage = document.getElementById('plantImage');
+      switch (plantStage) {
+        case "Empty":
+          plantImage.innerHTML = '<img src="empty.png" alt="Empty" />';
+          break;
+        case "Seeds":
+          plantImage.innerHTML = '<img src="seeds.webp" alt="Seeds" />';
+          break;
+        case "Petals":
+          plantImage.innerHTML = '<img src="petals.webp" alt="Petals" />';
+          break;
+        case "Flowers":
+          plantImage.innerHTML = '<img src="flowers.png" alt="Flowers" />';
+          break;
+        case "Finished":
+          plantImage.innerHTML = '<img src="finished.png" alt="Finished" />';
+          break;
+        default:
+          plantImage.innerHTML = '';
+          break;
+      }
+    }
+
+    function addIntake() {
+      const ozInput = document.getElementById('ozInput');
+      let addedOz = parseInt(ozInput.value, 10);
+
+      if (isNaN(addedOz) || addedOz <= 0) {
+        alert("Please enter a valid number of ounces.");
+        return;
+      }
+
+      history.push(addedOz);
+      intake += addedOz;
+      ozInput.value = '';
+      updateWaterTracker();
+    }
+
+    function resetTracker() {
+      intake = 0;
+      history = [];
+      updateWaterTracker();
+    }
+
+    function undoIntake() {
+      if (history.length > 0) {
+        const lastIntake = history.pop();
+        intake -= lastIntake;
+        updateWaterTracker();
+      } else {
+        alert("No intake to undo.");
+      }
+    }
+
+    updateWaterTracker();
+
+    function adjustScale() {
+      const containerWidth = 300;
+      const iframeWidth = document.documentElement.clientWidth;
+
+      let scale = iframeWidth / containerWidth;
+
+      scale = Math.max(0.2, Math.min(scale, 1));
+
+      document.body.style.transform = `scale(${scale})`;
+      document.body.style.width = `${containerWidth}px`;
+    }
+
+    adjustScale();
+    window.addEventListener('resize', adjustScale);
+  </script>
+</body>
+</html>
